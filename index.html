@@ -182,8 +182,10 @@
                 localStorage.setItem('watchedMovies', JSON.stringify(watchedMovies));
             }
 
-            // Render the movie lists
+            // Render the movie lists, now sorted alphabetically
             function renderLists() {
+                unwatchedMovies.sort((a, b) => a.title.localeCompare(b.title));
+                watchedMovies.sort((a, b) => a.title.localeCompare(b.title));
                 renderList(unwatchedMovies, unwatchedListUl, 'unwatched');
                 renderList(watchedMovies, watchedListUl, 'watched');
             }
