@@ -30,6 +30,9 @@
             cursor: pointer;
             transition: color 0.2s;
         }
+        .modal {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 flex items-center justify-center min-h-screen p-4">
@@ -74,10 +77,20 @@
             </div>
         </div>
 
-        <!-- List Toggles -->
-        <div id="list-toggles" class="flex flex-wrap justify-center gap-4 w-full mb-6">
+        <!-- List Toggles & Share Buttons -->
+        <div id="list-controls" class="flex flex-wrap justify-center gap-4 w-full mb-6">
             <button id="toggle-unwatched-list" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition-colors duration-300">Show Watch List</button>
             <button id="toggle-watched-list" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition-colors duration-300">Show Watched List</button>
+            <button id="share-link-button" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors duration-300">Share Link</button>
+        </div>
+
+        <!-- Import section -->
+        <div class="w-full mb-6">
+            <label for="import-link-input" class="block text-sm font-medium text-gray-400 mb-2">Or, paste a shared link below:</label>
+            <div class="flex flex-col md:flex-row gap-2">
+                <input type="text" id="import-link-input" placeholder="Paste link here..." class="flex-1 bg-gray-700 border border-gray-600 rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-blue-400 text-gray-100 placeholder-gray-400">
+                <button id="import-link-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 shadow-md">Import List</button>
+            </div>
         </div>
 
         <!-- Movie Lists -->
@@ -120,6 +133,9 @@
             const starRating = document.getElementById('star-rating');
             const ratingStars = starRating.querySelectorAll('.rating-star');
             const ratingMessage = document.getElementById('rating-message');
+            const shareLinkButton = document.getElementById('share-link-button');
+            const importLinkInput = document.getElementById('import-link-input');
+            const importLinkButton = document.getElementById('import-link-button');
 
             let unwatchedMovies = [];
             let watchedMovies = [];
@@ -127,10 +143,36 @@
             let shuffledMovies = [];
             let ratingInProgress = false;
 
-            // Load movies from localStorage
+            // Helper function to load movies from a base64 encoded hash string
+            function loadListFromHash(hash) {
+                if (!hash) {
+                    movieTitleDisplay.textContent = 'Error: No data in link.';
+                    return false;
+                }
+                try {
+                    const decodedData = atob(hash);
+                    const data = JSON.parse(decodedData);
+                    unwatchedMovies = data.unwatched || [];
+                    watchedMovies = data.watched || [];
+                    saveMovies();
+                    renderLists();
+                    return true;
+                } catch (e) {
+                    console.error("Failed to parse URL data:", e);
+                    movieTitleDisplay.textContent = 'Error: Invalid link format.';
+                    return false;
+                }
+            }
+
+            // Load movies from localStorage or URL hash on initial page load
             function loadMovies() {
-                unwatchedMovies = JSON.parse(localStorage.getItem('unwatchedMovies')) || [];
-                watchedMovies = JSON.parse(localStorage.getItem('watchedMovies')) || [];
+                const urlHash = window.location.hash.substring(1);
+                if (loadListFromHash(urlHash)) {
+                    movieTitleDisplay.textContent = 'Movie list loaded from link!';
+                } else {
+                    unwatchedMovies = JSON.parse(localStorage.getItem('unwatchedMovies')) || [];
+                    watchedMovies = JSON.parse(localStorage.getItem('watchedMovies')) || [];
+                }
                 renderLists();
             }
 
@@ -324,6 +366,42 @@
                 }
             });
             
+            // Share via URL hash
+            shareLinkButton.addEventListener('click', () => {
+                const data = {
+                    unwatched: unwatchedMovies,
+                    watched: watchedMovies
+                };
+                const json = JSON.stringify(data);
+                const encodedData = btoa(json); // Base64 encoding
+                const newUrl = `${window.location.origin}${window.location.pathname}#${encodedData}`;
+                
+                // Use document.execCommand('copy') for better compatibility
+                const tempInput = document.createElement('input');
+                tempInput.value = newUrl;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+
+                movieTitleDisplay.textContent = 'Link copied to clipboard!';
+            });
+            
+            // Import link via a dedicated input field
+            importLinkButton.addEventListener('click', () => {
+                const url = importLinkInput.value;
+                const urlParts = url.split('#');
+                if (urlParts.length > 1) {
+                    const hash = urlParts[1];
+                    if (loadListFromHash(hash)) {
+                        movieTitleDisplay.textContent = 'Movie list imported successfully!';
+                        importLinkInput.value = '';
+                    }
+                } else {
+                    movieTitleDisplay.textContent = 'Error: Please paste a valid link.';
+                }
+            });
+            
             // Speech Recognition
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
@@ -368,3 +446,4 @@
     </script>
 </body>
 </html>
+
