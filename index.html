@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Picker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a2e;
+        }
+        .container {
+            min-height: 100vh;
+        }
+        .text-neon-blue {
+            color: #484c95;
+        }
+        .bg-neon-blue {
+            background-color: #484c95;
+        }
+        #voice-input-button svg {
+            transition: color 0.3s ease;
+        }
+        #voice-input-button.listening svg {
+            color: #ef4444; /* red-500 */
+        }
+        .rating-star {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div id="app-container" class="w-full max-w-2xl bg-gray-800 rounded-2xl shadow-lg p-6 md:p-10 flex flex-col items-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-6 text-center text-teal-400">Movie Picker</h1>
+
+        <!-- Main Display -->
+        <div id="main-display" class="bg-gray-700 p-6 rounded-xl w-full text-center min-h-[120px] flex flex-col justify-center items-center shadow-inner mb-6">
+            <p id="movie-title" class="text-3xl md:text-4xl font-semibold text-white">Hit 'Pick' to get started!</p>
+        </div>
+
+        <!-- Main Controls -->
+        <div id="main-controls" class="flex flex-wrap justify-center gap-4 w-full mb-6">
+            <button id="pick-button" class="flex-1 min-w-[150px] bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 shadow-md">Pick a Movie</button>
+            <button id="watched-button" class="flex-1 min-w-[150px] bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 shadow-md hidden">I Watched It!</button>
+        </div>
+
+        <!-- Rating Section -->
+        <div id="rating-section" class="w-full mt-4 hidden">
+            <p class="text-center text-gray-300 mb-2">Rate this movie:</p>
+            <div id="star-rating" class="flex justify-center text-3xl text-gray-500 space-x-1">
+                <span class="rating-star" data-rating="1">★</span>
+                <span class="rating-star" data-rating="2">★</span>
+                <span class="rating-star" data-rating="3">★</span>
+                <span class="rating-star" data-rating="4">★</span>
+                <span class="rating-star" data-rating="5">★</span>
+            </div>
+            <p id="rating-message" class="text-center text-gray-400 mt-2"></p>
+        </div>
+
+        <!-- Add New Movie -->
+        <div id="add-movie-section" class="w-full mb-6">
+            <div class="flex flex-col md:flex-row gap-2">
+                <input type="text" id="new-movie-input" placeholder="Add a new movie..." class="flex-1 bg-gray-700 border border-gray-600 rounded-lg py-3 px-4 focus:outline-none focus:ring-2 focus:ring-teal-400 text-gray-100 placeholder-gray-400">
+                <button id="voice-input-button" title="Add movies by voice" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </button>
+                <button id="add-movie-button" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300 shadow-md">Add Movie</button>
+            </div>
+        </div>
+
+        <!-- List Toggles -->
+        <div id="list-toggles" class="flex flex-wrap justify-center gap-4 w-full mb-6">
+            <button id="toggle-unwatched-list" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition-colors duration-300">Show Watch List</button>
+            <button id="toggle-watched-list" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition-colors duration-300">Show Watched List</button>
+        </div>
+
+        <!-- Movie Lists -->
+        <div id="lists-container" class="w-full flex flex-col gap-6">
+            <div id="unwatched-list-container" class="hidden bg-gray-700 rounded-xl p-4 shadow-inner">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-2xl font-semibold text-teal-400">Watch List</h3>
+                    <button id="reset-unwatched-button" class="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-2 px-4 rounded-full transition-colors duration-300">Reset</button>
+                </div>
+                <ul id="unwatched-list" class="space-y-2"></ul>
+            </div>
+
+            <div id="watched-list-container" class="hidden bg-gray-700 rounded-xl p-4 shadow-inner">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-2xl font-semibold text-teal-400">Watched List</h3>
+                    <button id="reset-watched-button" class="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-2 px-4 rounded-full transition-colors duration-300">Move All to Watch List</button>
+                </div>
+                <ul id="watched-list" class="space-y-2"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const pickButton = document.getElementById('pick-button');
+            const watchedButton = document.getElementById('watched-button');
+            const movieTitleDisplay = document.getElementById('movie-title');
+            const newMovieInput = document.getElementById('new-movie-input');
+            const addMovieButton = document.getElementById('add-movie-button');
+            const voiceInputButton = document.getElementById('voice-input-button');
+            const unwatchedListUl = document.getElementById('unwatched-list');
+            const watchedListUl = document.getElementById('watched-list');
+            const unwatchedListContainer = document.getElementById('unwatched-list-container');
+            const watchedListContainer = document.getElementById('watched-list-container');
+            const toggleUnwatchedListBtn = document.getElementById('toggle-unwatched-list');
+            const toggleWatchedListBtn = document.getElementById('toggle-watched-list');
+            const resetUnwatchedButton = document.getElementById('reset-unwatched-button');
+            const resetWatchedButton = document.getElementById('reset-watched-button');
+            const ratingSection = document.getElementById('rating-section');
+            const starRating = document.getElementById('star-rating');
+            const ratingStars = starRating.querySelectorAll('.rating-star');
+            const ratingMessage = document.getElementById('rating-message');
+
+            let unwatchedMovies = [];
+            let watchedMovies = [];
+            let currentMovie = null;
+            let shuffledMovies = [];
+            let ratingInProgress = false;
+
+            // Load movies from localStorage
+            function loadMovies() {
+                unwatchedMovies = JSON.parse(localStorage.getItem('unwatchedMovies')) || [];
+                watchedMovies = JSON.parse(localStorage.getItem('watchedMovies')) || [];
+                renderLists();
+            }
+
+            // Save movies to localStorage
+            function saveMovies() {
+                localStorage.setItem('unwatchedMovies', JSON.stringify(unwatchedMovies));
+                localStorage.setItem('watchedMovies', JSON.stringify(watchedMovies));
+            }
+
+            // Render the movie lists
+            function renderLists() {
+                renderList(unwatchedMovies, unwatchedListUl, 'unwatched');
+                renderList(watchedMovies, watchedListUl, 'watched');
+            }
+
+            function renderList(movies, ulElement, type) {
+                ulElement.innerHTML = '';
+                if (movies.length === 0) {
+                    ulElement.innerHTML = `<li class="text-gray-400 text-center py-2">No movies in this list.</li>`;
+                    return;
+                }
+                movies.forEach(movie => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-center justify-between bg-gray-600 rounded-lg p-3 shadow-sm';
+                    
+                    let movieInfo = movie.title;
+                    if (type === 'watched' && movie.rating) {
+                        movieInfo += ` <span class="text-yellow-400">${'★'.repeat(movie.rating)}</span>`;
+                    }
+                    li.innerHTML = movieInfo;
+                    
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.className = 'flex space-x-2';
+
+                    if (type === 'unwatched') {
+                        const removeBtn = document.createElement('button');
+                        removeBtn.textContent = 'Remove';
+                        removeBtn.className = 'bg-red-500 hover:bg-red-600 text-white text-xs font-bold py-1 px-3 rounded-full transition-colors duration-300';
+                        removeBtn.onclick = () => removeMovie(movie.title);
+                        buttonContainer.appendChild(removeBtn);
+                    } else if (type === 'watched') {
+                        const returnBtn = document.createElement('button');
+                        returnBtn.textContent = 'Move';
+                        returnBtn.className = 'bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold py-1 px-3 rounded-full transition-colors duration-300';
+                        returnBtn.onclick = () => returnMovieToUnwatched(movie);
+                        buttonContainer.appendChild(returnBtn);
+                    }
+                    li.appendChild(buttonContainer);
+                    ulElement.appendChild(li);
+                });
+            }
+
+            // Reusable function to add a movie
+            function addMovie(movieTitle) {
+                const trimmedTitle = movieTitle.trim();
+                if (trimmedTitle && !unwatchedMovies.some(m => m.title === trimmedTitle) && !watchedMovies.some(m => m.title === trimmedTitle)) {
+                    unwatchedMovies.push({ title: trimmedTitle });
+                    saveMovies();
+                    renderLists();
+                    movieTitleDisplay.textContent = `Added: ${trimmedTitle}`;
+                }
+            }
+
+            // Pick a movie from the shuffled list
+            pickButton.addEventListener('click', () => {
+                watchedButton.classList.remove('hidden');
+                ratingSection.classList.add('hidden');
+                
+                if (unwatchedMovies.length === 0) {
+                    movieTitleDisplay.textContent = 'No movies left! Add some more. 🎉';
+                    currentMovie = null;
+                    watchedButton.classList.add('hidden');
+                    return;
+                }
+
+                // If the shuffled list is empty, create a new one from the unwatched movies
+                if (shuffledMovies.length === 0) {
+                    shuffledMovies = [...unwatchedMovies].sort(() => Math.random() - 0.5);
+                }
+
+                currentMovie = shuffledMovies.pop();
+                movieTitleDisplay.textContent = currentMovie.title;
+            });
+
+            // Move current movie to "watched" list and show rating UI
+            watchedButton.addEventListener('click', () => {
+                if (currentMovie && !ratingInProgress) {
+                    watchedButton.classList.add('hidden');
+                    ratingSection.classList.remove('hidden');
+                    ratingInProgress = true;
+                    movieTitleDisplay.textContent = 'How was it?';
+                }
+            });
+
+            // Handle star rating click
+            ratingStars.forEach(star => {
+                star.addEventListener('click', (e) => {
+                    if (ratingInProgress) {
+                        const currentRating = parseInt(e.target.dataset.rating);
+                        
+                        // Update stars UI
+                        ratingStars.forEach(s => {
+                            if (parseInt(s.dataset.rating) <= currentRating) {
+                                s.style.color = 'yellow';
+                            } else {
+                                s.style.color = 'gray';
+                            }
+                        });
+                        
+                        ratingMessage.textContent = `Rated ${currentRating} stars!`;
+
+                        // Add movie to watched list with rating
+                        currentMovie.rating = currentRating;
+                        watchedMovies.push(currentMovie);
+                        unwatchedMovies = unwatchedMovies.filter(m => m.title !== currentMovie.title);
+                        
+                        saveMovies();
+                        renderLists();
+                        
+                        // Reset state for next pick
+                        currentMovie = null;
+                        ratingInProgress = false;
+                        
+                        // Clear rating UI
+                        setTimeout(() => {
+                            ratingSection.classList.add('hidden');
+                            ratingStars.forEach(s => s.style.color = 'gray');
+                            ratingMessage.textContent = '';
+                            movieTitleDisplay.textContent = 'Hit \'Pick\' for a new movie!';
+                            watchedButton.classList.add('hidden');
+                        }, 1500);
+                    }
+                });
+            });
+
+            // Add a new movie from text input
+            addMovieButton.addEventListener('click', () => {
+                addMovie(newMovieInput.value);
+                newMovieInput.value = '';
+            });
+
+            // Remove a movie from the unwatched list
+            function removeMovie(movieTitle) {
+                unwatchedMovies = unwatchedMovies.filter(m => m.title !== movieTitle);
+                saveMovies();
+                renderLists();
+            }
+
+            // Move a movie from the watched list back to unwatched
+            function returnMovieToUnwatched(movie) {
+                watchedMovies = watchedMovies.filter(m => m.title !== movie.title);
+                unwatchedMovies.push({ title: movie.title });
+                saveMovies();
+                renderLists();
+                movieTitleDisplay.textContent = `'${movie.title}' moved back to Watch List.`;
+            }
+
+            // Reset unwatched movies
+            resetUnwatchedButton.addEventListener('click', () => {
+                unwatchedMovies = [];
+                saveMovies();
+                renderLists();
+                movieTitleDisplay.textContent = 'Watch list has been reset.';
+            });
+
+            // Reset watched movies
+            resetWatchedButton.addEventListener('click', () => {
+                unwatchedMovies = unwatchedMovies.concat(watchedMovies);
+                watchedMovies = [];
+                saveMovies();
+                renderLists();
+                movieTitleDisplay.textContent = 'Watched list has been moved to Watch List.';
+            });
+
+            // Toggle list visibility
+            toggleUnwatchedListBtn.addEventListener('click', () => {
+                unwatchedListContainer.classList.toggle('hidden');
+                toggleUnwatchedListBtn.textContent = unwatchedListContainer.classList.contains('hidden') ? 'Show Watch List' : 'Hide Watch List';
+                if (!watchedListContainer.classList.contains('hidden')) {
+                    watchedListContainer.classList.add('hidden');
+                    toggleWatchedListBtn.textContent = 'Show Watched List';
+                }
+            });
+
+            toggleWatchedListBtn.addEventListener('click', () => {
+                watchedListContainer.classList.toggle('hidden');
+                toggleWatchedListBtn.textContent = watchedListContainer.classList.contains('hidden') ? 'Show Watched List' : 'Hide Watched List';
+                if (!unwatchedListContainer.classList.contains('hidden')) {
+                    unwatchedListContainer.classList.add('hidden');
+                    toggleUnwatchedListBtn.textContent = 'Show Watch List';
+                }
+            });
+            
+            // Speech Recognition
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                const recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.lang = 'en-US';
+
+                voiceInputButton.addEventListener('click', () => {
+                    recognition.start();
+                    voiceInputButton.classList.add('listening');
+                    movieTitleDisplay.textContent = 'Listening... Speak now!';
+                });
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    const movies = transcript.split(/ and |,| and, /i).map(title => title.trim()).filter(title => title.length > 0);
+                    
+                    if (movies.length > 0) {
+                        movies.forEach(title => addMovie(title));
+                    } else {
+                        movieTitleDisplay.textContent = 'Nothing was recognized. Please try again.';
+                    }
+                    newMovieInput.value = '';
+                };
+
+                recognition.onend = () => {
+                    voiceInputButton.classList.remove('listening');
+                };
+
+                recognition.onerror = (event) => {
+                    voiceInputButton.classList.remove('listening');
+                    movieTitleDisplay.textContent = `Speech recognition error: ${event.error}. Please try again.`;
+                };
+            } else {
+                voiceInputButton.style.display = 'none';
+                console.log("Speech Recognition API is not supported in this browser.");
+            }
+            
+            // Initial load
+            loadMovies();
+        });
+    </script>
+</body>
+</html>
