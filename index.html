@@ -97,7 +97,7 @@
         <div id="lists-container" class="w-full flex flex-col gap-6">
             <div id="unwatched-list-container" class="hidden bg-gray-700 rounded-xl p-4 shadow-inner">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-2xl font-semibold text-teal-400">Watch List</h3>
+                    <h3 class="text-2xl font-semibold text-teal-400">Watch List <span id="unwatched-count" class="text-base text-gray-400 font-normal"></span></h3>
                     <button id="reset-unwatched-button" class="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-2 px-4 rounded-full transition-colors duration-300">Reset</button>
                 </div>
                 <ul id="unwatched-list" class="space-y-2"></ul>
@@ -105,7 +105,7 @@
 
             <div id="watched-list-container" class="hidden bg-gray-700 rounded-xl p-4 shadow-inner">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-2xl font-semibold text-teal-400">Watched List</h3>
+                    <h3 class="text-2xl font-semibold text-teal-400">Watched List <span id="watched-count" class="text-base text-gray-400 font-normal"></span></h3>
                     <button id="reset-watched-button" class="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-2 px-4 rounded-full transition-colors duration-300">Move All to Watch List</button>
                 </div>
                 <ul id="watched-list" class="space-y-2"></ul>
@@ -136,6 +136,8 @@
             const shareLinkButton = document.getElementById('share-link-button');
             const importLinkInput = document.getElementById('import-link-input');
             const importLinkButton = document.getElementById('import-link-button');
+            const unwatchedCountSpan = document.getElementById('unwatched-count');
+            const watchedCountSpan = document.getElementById('watched-count');
 
             let unwatchedMovies = [];
             let watchedMovies = [];
@@ -188,6 +190,13 @@
                 watchedMovies.sort((a, b) => a.title.localeCompare(b.title));
                 renderList(unwatchedMovies, unwatchedListUl, 'unwatched');
                 renderList(watchedMovies, watchedListUl, 'watched');
+
+                unwatchedCountSpan.textContent = `(${unwatchedMovies.length})`;
+                watchedCountSpan.textContent = `(${watchedMovies.length})`;
+
+                // Update the button text with the count
+                toggleUnwatchedListBtn.textContent = `Show Watch List (${unwatchedMovies.length})`;
+                toggleWatchedListBtn.textContent = `Show Watched List (${watchedMovies.length})`;
             }
 
             function renderList(movies, ulElement, type) {
@@ -352,19 +361,19 @@
             // Toggle list visibility
             toggleUnwatchedListBtn.addEventListener('click', () => {
                 unwatchedListContainer.classList.toggle('hidden');
-                toggleUnwatchedListBtn.textContent = unwatchedListContainer.classList.contains('hidden') ? 'Show Watch List' : 'Hide Watch List';
+                toggleUnwatchedListBtn.textContent = unwatchedListContainer.classList.contains('hidden') ? `Show Watch List (${unwatchedMovies.length})` : `Hide Watch List (${unwatchedMovies.length})`;
                 if (!watchedListContainer.classList.contains('hidden')) {
                     watchedListContainer.classList.add('hidden');
-                    toggleWatchedListBtn.textContent = 'Show Watched List';
+                    toggleWatchedListBtn.textContent = `Show Watched List (${watchedMovies.length})`;
                 }
             });
 
             toggleWatchedListBtn.addEventListener('click', () => {
                 watchedListContainer.classList.toggle('hidden');
-                toggleWatchedListBtn.textContent = watchedListContainer.classList.contains('hidden') ? 'Show Watched List' : 'Hide Watched List';
+                toggleWatchedListBtn.textContent = watchedListContainer.classList.contains('hidden') ? `Show Watched List (${watchedMovies.length})` : `Hide Watched List (${watchedMovies.length})`;
                 if (!unwatchedListContainer.classList.contains('hidden')) {
                     unwatchedListContainer.classList.add('hidden');
-                    toggleUnwatchedListBtn.textContent = 'Show Watch List';
+                    toggleUnwatchedListBtn.textContent = `Show Watch List (${unwatchedMovies.length})`;
                 }
             });
             
