@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" type="image/png" href="/Picker.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movie Picker</title>
@@ -49,6 +48,7 @@
         <!-- Main Controls -->
         <div id="main-controls" class="flex flex-wrap justify-center gap-4 w-full mb-6">
             <button id="pick-button" class="flex-1 min-w-[150px] bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 shadow-md">Pick a Movie</button>
+            <button id="pick-alphabetical-button" class="flex-1 min-w-[150px] bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 shadow-md">Pick Alphabetically</button>
             <button id="watched-button" class="flex-1 min-w-[150px] bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105 shadow-md hidden">I Watched It!</button>
         </div>
 
@@ -117,6 +117,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const pickButton = document.getElementById('pick-button');
+            const pickAlphabeticalButton = document.getElementById('pick-alphabetical-button');
             const watchedButton = document.getElementById('watched-button');
             const movieTitleDisplay = document.getElementById('movie-title');
             const newMovieInput = document.getElementById('new-movie-input');
@@ -247,26 +248,41 @@
                     movieTitleDisplay.textContent = `Added: ${trimmedTitle}`;
                 }
             }
-
-            // Pick a movie from the shuffled list
-            pickButton.addEventListener('click', () => {
+            
+            // Function to handle the actual picking logic (used by both buttons)
+            function pickMovie(isAlphabetical) {
                 watchedButton.classList.remove('hidden');
                 ratingSection.classList.add('hidden');
-                
+
                 if (unwatchedMovies.length === 0) {
                     movieTitleDisplay.textContent = 'No movies left! Add some more. 🎉';
                     currentMovie = null;
                     watchedButton.classList.add('hidden');
                     return;
                 }
-
-                // If the shuffled list is empty, create a new one from the unwatched movies
-                if (shuffledMovies.length === 0) {
-                    shuffledMovies = [...unwatchedMovies].sort(() => Math.random() - 0.5);
+                
+                if (isAlphabetical) {
+                    // Pick the first movie from the sorted list
+                    currentMovie = unwatchedMovies[0];
+                } else {
+                    // Pick a random movie from the shuffled list
+                    if (shuffledMovies.length === 0) {
+                        shuffledMovies = [...unwatchedMovies].sort(() => Math.random() - 0.5);
+                    }
+                    currentMovie = shuffledMovies.pop();
                 }
 
-                currentMovie = shuffledMovies.pop();
                 movieTitleDisplay.textContent = currentMovie.title;
+            }
+
+            // Pick a movie from the shuffled list (original random logic)
+            pickButton.addEventListener('click', () => {
+                pickMovie(false);
+            });
+
+            // Pick a movie alphabetically
+            pickAlphabeticalButton.addEventListener('click', () => {
+                pickMovie(true);
             });
 
             // Move current movie to "watched" list and show rating UI
@@ -308,13 +324,15 @@
                         currentMovie = null;
                         ratingInProgress = false;
                         
-                        // Clear rating UI
+                        // Immediately hide the button and rating section
+                        ratingSection.classList.add('hidden');
+                        watchedButton.classList.add('hidden');
+                        
+                        // Clear rating UI after a brief delay for user to see the rating message
                         setTimeout(() => {
-                            ratingSection.classList.add('hidden');
                             ratingStars.forEach(s => s.style.color = 'gray');
                             ratingMessage.textContent = '';
                             movieTitleDisplay.textContent = 'Hit \'Pick\' for a new movie!';
-                            watchedButton.classList.add('hidden');
                         }, 1500);
                     }
                 });
